@@ -1,7 +1,6 @@
 
 import json
-from datetime import datetime
-
+import datetime
 from icalendar import Calendar, Event
 from notion.client import NotionClient
 from notion.collection import CalendarView
@@ -15,26 +14,20 @@ BasicBlock.__repr__ = BasicBlock.__str__ = lambda self: self.title
 User.__repr__ = User.__str__ = lambda self: self.given_name or self.family_name
 
 
-def get_ical(client, calendar_url, title_format):
-    calendar = client.get_block(calendar_url)
-    for view in calendar.views:
-        if isinstance(view, CalendarView):
-            calendar_view = view
-            break
-    else:
-        raise Exception(f"Couldn't find a calendar view in the following list: {calendar.views}")
-
-    calendar_query = calendar_view.build_query()
-    calendar_entries = calendar_query.execute()
-
+def get_ical(client, calendar_url, title_format, calendar_by=None, debug=False):
+    
+    # Retrieve information from Notion with any views
+    calendar = client.get_block(calendar_url).views[0]
     collection = calendar.collection
-
     schema = collection.get_schema_properties()
+    calendar_entries = calendar.build_query().execute()
 
+    # Collate schema info
     properties_by_name = {}
     properties_by_slug = {}
     properties_by_id = {}
     title_prop = None
+    calendar_by_list=[]
 
     for prop in schema:
         name = prop['name']
@@ -45,11 +38,16 @@ def get_ical(client, calendar_url, title_format):
         properties_by_id[prop['id']] = prop
         if prop['type'] == 'title':
             title_prop = prop
+        if prop['type'] == 'date':
+            calendar_by_list.append(prop)
             
     assert title_prop is not None, "Couldn't find a title property"
+    assert len(calendar_by_list) > 0, "Table without a date property"
 
-    dateprop = properties_by_id[calendar_query.calendar_by]
-    #assert dateprop['type'] == 'date', "Property '{}' is not a Date property".format(settings['property'])
+    if calendar_by is not None and calendar_by != "": 
+        dateprop = properties_by_slug[calendar_by]
+    else:
+        dateprop = properties_by_id[calendar_by_list[0]["id"]]
 
     cal = Calendar()
     cal.add("summary", "Imported from Notion, via notion-export-ics.")
@@ -68,7 +66,10 @@ def get_ical(client, calendar_url, title_format):
         desc = ''
         event.add('dtstart', date.start)
         if date.end is not None:
+            if not isinstance(end, datetime.datetime):
+                date.end += datetime.timedelta(days=(1))
             event.add('dtend', date.end)
+
         desc += e.get_browseable_url() + '\n\n'
         desc += 'Properties:\n'
         for k, v in e.get_all_properties().items():
@@ -82,9 +83,9 @@ def get_ical(client, calendar_url, title_format):
         cal.add_component(event)
         
         # Print
-        #print("{}: {} -> {}".format(title, date.start, date.end))
-        #print(desc)
-        #print('--------------')
+        if debug:
+            print("{}: {} -> {}".format(title, date.start, date.end))
+            print(desc)
+            print('--------------')
     
     return cal
-

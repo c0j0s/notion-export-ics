@@ -15,24 +15,31 @@
     <input id='url' placeholder="https://notion.so/...">
     <label for='format'>Title format</label>
     <input id='format' value='{NAME}'>
+    <label for='calendar_by'>Calendar by</label>
+    <input id='calendar_by' value=''>
     <label for='result'>Resulting URL</label>
     <input id='result' placeholder='loading...' readonly onclick="this.select(); document.execCommand('copy')">
 
     <script>
         document.addEventListener("DOMContentLoaded", function(event) {
-            let url_el = document.getElementById('url');
-            let format_el = document.getElementById('format');
-            let res_el = document.getElementById('result');
-        
-            function recalc_url() {
-                let url = window.btoa(url_el.value);
-                let format = window.btoa(format_el.value);
-                res = new URL('/ics', window.location.href);
+            const url_el = document.getElementById('url');
+            const format_el = document.getElementById('format');
+            const calendar_by_el = document.getElementById('calendar_by');
+            const res_el = document.getElementById('result');
+
+            const recalc_url = () => {
+                const url = window.btoa(url_el.value);
+                const format = window.btoa(format_el.value);
+                const calendar_by = window.btoa(calendar_by_el.value);
+
+                const res = new URL('/ics', window.location.href);
                 res.searchParams.append('url', url);
                 res.searchParams.append('format', format);
+                res.searchParams.append('format', calendar_by);
+                res.searchParams.append('calendar_by', calendar_by);
                 res_el.value = res.href;
             }
-        
+
             url_el.addEventListener("input", recalc_url);
             format_el.addEventListener("input", recalc_url);
 

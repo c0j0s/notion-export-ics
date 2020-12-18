@@ -33,9 +33,10 @@ def make_ics():
         try:
             calendar_url = base64.b64decode(request.args['url']).decode()
             title_format = base64.b64decode(request.args['format']).decode()
+            calendar_by = base64.b64decode(request.args['calendar_by']).decode()
         except Exception as e:
             raise Exception('Something went wrong with the given parameters') from e
-        cal = get_ical(client, calendar_url, title_format)
+        cal = get_ical(client, calendar_url, title_format, calendar_by)
         text = cal.to_ical()
     except Exception as e:
         traceback.print_exc()

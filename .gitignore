@@ -2,3 +2,4 @@ settings.json
 *.ics
 
 
+__pycache__/*
