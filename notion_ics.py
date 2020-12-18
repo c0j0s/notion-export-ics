@@ -69,6 +69,8 @@ def get_ical(client, calendar_url, title_format, calendar_by=None, debug=False):
             if not isinstance(end, datetime.datetime):
                 date.end += datetime.timedelta(days=(1))
             event.add('dtend', date.end)
+        else:
+            date.end = date.start + datetime.timedelta(hours=(1))
 
         desc += e.get_browseable_url() + '\n\n'
         desc += 'Properties:\n'
